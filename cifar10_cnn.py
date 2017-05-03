@@ -5,9 +5,6 @@ from __future__ import print_function
 import os
 import shutil
 import argparse
-
-
-
 import keras
 from keras.datasets import cifar10
 from keras.preprocessing.image import ImageDataGenerator
