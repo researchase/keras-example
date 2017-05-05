@@ -14,6 +14,8 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 def use_valohai_input():
+
+    
     """
     Place input file defined through Valohai to cache where cifar10.load_data() expects it to be.
     This allows skipping download phase if the input file is already on the instance.
