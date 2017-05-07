@@ -16,6 +16,9 @@ from keras.layers import Conv2D, MaxPooling2D
 from keras.models import model_from_json
 def use_valohai_input(): 
 
+    
+    
+    
     """
     Place input file defined through Valohai to cache where cifar10.load_data() expects it to be.
     This allows skipping download phase if the input file is already on the instance.
