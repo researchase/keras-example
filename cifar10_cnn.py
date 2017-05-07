@@ -37,8 +37,7 @@ def use_valohai_input():
     input_file = os.path.join(input_dir, input_files[0])  # We expect to have only one file as input
     shutil.move(input_file, fpath)
 
-    
-    
+   
 
 def train(params):
     batch_size = params.batch_size
