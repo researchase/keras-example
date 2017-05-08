@@ -31,9 +31,6 @@
     image: valohai/keras:2.0.0-tensorflow1.0.1-python3.6-cuda8.0-cudnn5-devel-ubuntu16.04
     command:
       - python cifar10_cnn.py {parameters}
-    inputs:
-      - name: cifar-10-batches-py
-        default: http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
     parameters:
       - name: batch_size
         pass-as: --batch_size={v}
