@@ -19,10 +19,7 @@ from sklearn.model_selection import KFold
 from sklearn.preprocessing import LabelEncoder
 from sklearn.pipeline import Pipeline
 def use_valohai_input(): 
-    dataset = numpy.loadtxt("pima-indians-diabetes.csv", delimiter=",")
-    # split into input and output variables
-    X = dataset[:,0:8]
-    Y = dataset[:,8]
+    pass
 
 def baseline_model():
     # create model
