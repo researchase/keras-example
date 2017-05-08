@@ -46,8 +46,6 @@ def train(params):
     output_file = os.path.join(outputs_dir, 'my_model.h5')
     print('Saving model to %s' % output_file)
     model.save(output_file)
-    
-
 if __name__ == '__main__':
     use_valohai_input()
 
