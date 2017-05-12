@@ -26,15 +26,31 @@
         type: string
         default: True
 
-
 - step:
     name: tensorflow-cifar
     image: valohai/keras:2.0.0-tensorflow1.0.1-python3.6-cuda8.0-cudnn5-devel-ubuntu16.04
     command:
-      - python cifar10_cnn.py 
+      - python cifar10_cnn.py {parameters}
     inputs:
-      - name: iris
-        default: https://raw.githubusercontent.com/uiuc-cse/data-fa14/gh-pages/data/iris.csv
+      - name: cifar-10-batches-py
+        default: http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
+    parameters:
+      - name: batch_size
+        pass-as: --batch_size={v}
+        type: integer
+        default: 32
+      - name: num_classes
+        pass-as: --num_classes={v}
+        type: integer
+        default: 10
+      - name: epochs
+        pass-as: --epochs={v}
+        type: integer
+        default: 5
+      - name: data_augmentation
+        pass-as: --data_augmentation={v}
+        type: string
+        default: True
 
 - step:
     name: theano-deep-dream

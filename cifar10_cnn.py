@@ -1,57 +1,131 @@
 # Original from https://github.com/fchollet/keras/tree/2.0.0/examples
 
-#developed by Ashwin
-#for valohai bot
-#hope it works
-
-
-
 from __future__ import print_function
 import os
 import shutil
 import argparse
-import keras
-import numpy
-from pandas import read_csv
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.wrappers.scikit_learn import KerasClassifier
-from keras.utils import np_utils
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import KFold
-from sklearn.preprocessing import LabelEncoder
-from sklearn.pipeline import Pipeline
-def use_valohai_input(): 
-    pass
 
-def baseline_model():
-    # create model
-    model = Sequential()
-    model.add(Dense(4, input_dim=4, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(3, kernel_initializer='normal', activation='sigmoid'))
-    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-    return model   
+import keras
+from keras.datasets import cifar10
+from keras.preprocessing.image import ImageDataGenerator
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.layers import Conv2D, MaxPooling2D
+
+
+def use_valohai_input():
+    """
+    Place input file defined through Valohai to cache where cifar10.load_data() expects it to be.
+    This allows skipping download phase if the input file is already on the instance.
+    """
+    datadir_base = os.path.expanduser(os.path.join('~', '.keras'))
+    datadir = os.path.join(datadir_base, 'datasets')
+    if not os.path.exists(datadir):
+        os.makedirs(datadir)
+
+    inputs_dir = os.getenv('VH_INPUTS_DIR', '/')
+    input_dir = os.path.join(inputs_dir, 'cifar-10-batches-py')
+    input_files = os.listdir(input_dir)
+
+    untar_fpath = os.path.join(datadir, 'cifar-10-batches-py')
+    fpath = untar_fpath + '.tar.gz'
+    input_file = os.path.join(input_dir, input_files[0])  # We expect to have only one file as input
+    shutil.move(input_file, fpath)
+
 
 def train(params):
-    seed = 7
-    numpy.random.seed(seed)
-    # load dataset
-    dataframe = read_csv("iris.csv", header=None)
-    dataset = dataframe.values
-    X = dataset[:,0:4].astype(float)
-    Y = dataset[:,4]
-    # encode class values as integers
-    encoder = LabelEncoder()
-    encoder.fit(Y)
-    encoded_Y = encoder.transform(Y)
-    # convert integers to dummy variables (i.e. one hot encoded)
-    dummy_y = np_utils.to_categorical(encoded_Y)
-    # define baseline model
+    batch_size = params.batch_size
+    num_classes = params.num_classes
+    epochs = params.epochs
+    data_augmentation = params.data_augmentation
 
-    estimator = KerasClassifier(build_fn=baseline_model, epochs=200, batch_size=5, verbose=0)
-    kfold = KFold(n_splits=10, shuffle=True, random_state=seed)
-    results = cross_val_score(estimator, X, dummy_y, cv=kfold)
-    print("Accuracy: %.2f%% (%.2f%%)" % (results.mean()*100, results.std()*100))
+    img_rows, img_cols = 32, 32  # input image dimensions
+    img_channels = 3  # The CIFAR10 images are RGB.
+
+    # The data, shuffled and split between train and test sets:
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    print('x_train shape:', x_train.shape)
+    print(x_train.shape[0], 'train samples')
+    print(x_test.shape[0], 'test samples')
+
+    # Convert class vectors to binary class matrices.
+    y_train = keras.utils.to_categorical(y_train, num_classes)
+    y_test = keras.utils.to_categorical(y_test, num_classes)
+
+    model = Sequential()
+
+    model.add(Conv2D(32, (3, 3), padding='same', input_shape=x_train.shape[1:]))
+    model.add(Activation('relu'))
+    model.add(Conv2D(32, (3, 3)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+
+    model.add(Conv2D(64, (3, 3), padding='same'))
+    model.add(Activation('relu'))
+    model.add(Conv2D(64, (3, 3)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+
+    model.add(Flatten())
+    model.add(Dense(512))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(num_classes))
+    model.add(Activation('softmax'))
+
+    # Let's train the model using RMSprop
+    model.compile(loss='categorical_crossentropy',
+                  optimizer='rmsprop',
+                  metrics=['accuracy'])
+
+    x_train = x_train.astype('float32')
+    x_test = x_test.astype('float32')
+    x_train /= 255
+    x_test /= 255
+
+    if not data_augmentation:
+        print('Not using data augmentation.')
+        model.fit(x_train, y_train,
+                  batch_size=batch_size,
+                  epochs=epochs,
+                  validation_data=(x_test, y_test),
+                  shuffle=True,
+                  verbose=2)
+    else:
+        print('Using real-time data augmentation.')
+
+        # This will do preprocessing and real-time data augmentation:
+        datagen = ImageDataGenerator(
+            featurewise_center=False,  # set input mean to 0 over the dataset
+            samplewise_center=False,  # set each sample mean to 0
+            featurewise_std_normalization=False,  # divide inputs by std of the dataset
+            samplewise_std_normalization=False,  # divide each input by its std
+            zca_whitening=False,  # apply ZCA whitening
+            rotation_range=0,  # randomly rotate images in the range (degrees, 0 to 180)
+            width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
+            height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
+            horizontal_flip=True,  # randomly flip images
+            vertical_flip=False)  # randomly flip images
+
+        # Compute quantities required for featurewise normalization
+        # (std, mean, and principal components if ZCA whitening is applied).
+        datagen.fit(x_train)
+
+        # Fit the model on the batches generated by datagen.flow().
+        model.fit_generator(datagen.flow(x_train, y_train, batch_size=batch_size),
+                            steps_per_epoch=x_train.shape[0],
+                            epochs=epochs,
+                            validation_data=(x_test, y_test),
+                            verbose=2)
+
+    outputs_dir = os.getenv('VH_OUTPUTS_DIR', './')
+    output_file = os.path.join(outputs_dir, 'my_model.h5')
+    print('Saving model to %s' % output_file)
+    model.save(output_file)
+
+
 if __name__ == '__main__':
     use_valohai_input()
 
