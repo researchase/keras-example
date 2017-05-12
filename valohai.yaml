@@ -34,7 +34,7 @@
       - python cifar10_cnn.py 
     inputs:
       - name: iris
-        default: https://osdn.net/frs/g_redir.php?m=netix&f=%2Firisdss%2FIRIS.csv
+        default: https://raw.githubusercontent.com/uiuc-cse/data-fa14/gh-pages/data/iris.csv
 
 - step:
     name: theano-deep-dream
